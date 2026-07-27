@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { ASSETS } from "@/lib/constants";
 import { primeElement, setVideoEl } from "@/lib/videos";
+import { useVideoSource } from "@/lib/videoQuality";
 
 /**
  * The trailers, rendered as REAL fullscreen `<video>` elements (object-fit:cover)
@@ -15,6 +16,9 @@ export default function VideoLayer() {
   const marvelRef = useRef<HTMLVideoElement>(null);
   const heroRef = useRef<HTMLVideoElement>(null);
   const finaleRef = useRef<HTMLVideoElement>(null);
+  const marvelSrc = useVideoSource(ASSETS.marvelVideo);
+  const heroSrc = useVideoSource(ASSETS.heroVideo);
+  const finaleSrc = useVideoSource(ASSETS.finaleVideo);
 
   useEffect(() => {
     const m = marvelRef.current;
@@ -62,7 +66,7 @@ export default function VideoLayer() {
       <video
         ref={marvelRef}
         className="cover-video"
-        src={ASSETS.marvelVideo}
+        src={marvelSrc}
         poster={ASSETS.marvelPoster}
         preload="auto"
         muted
@@ -72,7 +76,7 @@ export default function VideoLayer() {
       <video
         ref={heroRef}
         className="cover-video"
-        src={ASSETS.heroVideo}
+        src={heroSrc}
         poster={ASSETS.heroPoster}
         preload="auto"
         muted
@@ -82,7 +86,7 @@ export default function VideoLayer() {
       <video
         ref={finaleRef}
         className="cover-video"
-        src={ASSETS.finaleVideo}
+        src={finaleSrc}
         poster={ASSETS.finalePoster}
         preload="metadata"
         muted

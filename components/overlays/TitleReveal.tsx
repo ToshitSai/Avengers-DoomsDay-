@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { signals } from "@/lib/signals";
 import { ASSETS } from "@/lib/constants";
 import { useRaf } from "@/lib/useRaf";
+import { useVideoSource } from "@/lib/videoQuality";
 import styles from "./title.module.css";
 
 /**
@@ -23,6 +24,7 @@ const smoothstep = (a: number, b: number, x: number) => {
 export default function TitleReveal() {
   const layerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const titleSrc = useVideoSource(ASSETS.titleVideo);
 
   useEffect(() => {
     const v = videoRef.current;
@@ -64,7 +66,7 @@ export default function TitleReveal() {
           videoRef.current = el;
         }}
         className={styles.video}
-        src={ASSETS.titleVideo}
+        src={titleSrc}
         poster={ASSETS.titlePoster}
         muted
         loop

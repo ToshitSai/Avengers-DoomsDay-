@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { signals } from "@/lib/signals";
 import { useRaf } from "@/lib/useRaf";
+import { useVideoSources } from "@/lib/videoQuality";
 import styles from "./orbit.module.css";
 
 /**
@@ -68,6 +69,14 @@ const smoothstep = (a: number, b: number, x: number) => {
 export default function CharacterOrbit() {
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
+  const videoSources = useVideoSources([
+    "/videos/char-doom.mp4",
+    "/videos/char-blackpanther.mp4",
+    "/videos/char-cyclops.mp4",
+    "/videos/char-mystique.mp4",
+    "/videos/char-gambit.mp4",
+    "/videos/char-namor.mp4",
+  ]);
 
   // Guarantee muted inline playback (works around React not always reflecting the
   // `muted` attribute) so programmatic play() is never blocked by autoplay policy.
@@ -156,7 +165,7 @@ export default function CharacterOrbit() {
               videoRefs.current[i] = el;
             }}
             className={styles.video}
-            src={`/videos/char-${c.slug}.mp4`}
+            src={videoSources[i]}
             poster={`/videos/char-${c.slug}-poster.jpg`}
             muted
             loop

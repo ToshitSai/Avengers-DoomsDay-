@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { signals } from "@/lib/signals";
 import { useRaf } from "@/lib/useRaf";
+import { useVideoSources } from "@/lib/videoQuality";
 import styles from "./reel.module.css";
 
 /**
@@ -53,6 +54,12 @@ export default function HorizontalReel() {
   const innerRefs = useRef<(HTMLDivElement | null)[]>([]);
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
   const progressRef = useRef<HTMLSpanElement>(null);
+  const videoSources = useVideoSources([
+    "/videos/char-doom.mp4",
+    "/videos/char-blackpanther.mp4",
+    "/videos/char-cyclops.mp4",
+    "/videos/char-mystique.mp4",
+  ]);
 
   // guarantee muted inline playback so programmatic play() is never blocked
   useEffect(() => {
@@ -157,7 +164,7 @@ export default function HorizontalReel() {
                       videoRefs.current[i] = el;
                     }}
                     className={styles.video}
-                    src={`/videos/char-${s.slug}.mp4`}
+                    src={videoSources[i]}
                     poster={`/videos/char-${s.slug}-poster.jpg`}
                     muted
                     loop
