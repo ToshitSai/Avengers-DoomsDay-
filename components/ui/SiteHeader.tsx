@@ -3,9 +3,8 @@
 import { useRef } from "react";
 import { signals } from "@/lib/signals";
 import { useRaf } from "@/lib/useRaf";
+import { SECTION_NAV, goToSection } from "@/lib/sectionNavigation";
 import styles from "./ui.module.css";
-
-const NAV = ["Overview", "Universe", "Heroes", "Trailers", "Tickets"];
 
 const clamp01 = (x: number) => (x < 0 ? 0 : x > 1 ? 1 : x);
 const smoothstep = (a: number, b: number, x: number) => {
@@ -42,13 +41,21 @@ export default function SiteHeader() {
         </span>
       </div>
       <nav className={styles.nav}>
-        {NAV.map((n) => (
-          <a key={n} href="#" className={styles.navLink} onClick={(e) => e.preventDefault()}>
-            {n}
+        {SECTION_NAV.map((item) => (
+          <a
+            key={item.target}
+            href={`#${item.target}`}
+            className={styles.navLink}
+            onClick={(e) => {
+              e.preventDefault();
+              goToSection(item.target);
+            }}
+          >
+            {item.label}
           </a>
         ))}
       </nav>
-      <button className={styles.cta} type="button">
+      <button className={styles.cta} type="button" onClick={() => goToSection("tickets")}>
         Get Tickets
       </button>
     </header>

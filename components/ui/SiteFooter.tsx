@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import { signals } from "@/lib/signals";
 import { useRaf } from "@/lib/useRaf";
+import { SECTION_NAV, goToSection } from "@/lib/sectionNavigation";
 import styles from "./footer.module.css";
 
 const clamp01 = (x: number) => (x < 0 ? 0 : x > 1 ? 1 : x);
@@ -10,9 +11,6 @@ const smoothstep = (a: number, b: number, x: number) => {
   const t = clamp01((x - a) / (b - a));
   return t * t * (3 - 2 * t);
 };
-
-const NAV = ["Overview", "Characters", "Story", "Timeline"];
-const SOCIAL = ["Instagram", "X", "YouTube"];
 
 export default function SiteFooter() {
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -33,8 +31,6 @@ export default function SiteFooter() {
     }
   });
 
-  const noop = (e: React.MouseEvent) => e.preventDefault();
-
   return (
     <div className={styles.wrap} ref={wrapRef} style={{ visibility: "hidden" }}>
       <footer className={styles.footer} ref={footRef} style={{ opacity: 0 }}>
@@ -50,24 +46,20 @@ export default function SiteFooter() {
           <nav>
             <div className={styles.colHead}>Explore</div>
             <div className={styles.links}>
-              {NAV.map((l) => (
-                <a key={l} href="#" onClick={noop}>
-                  {l}
+              {SECTION_NAV.map((item) => (
+                <a
+                  key={item.target}
+                  href={`#${item.target}`}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    goToSection(item.target);
+                  }}
+                >
+                  {item.label}
                 </a>
               ))}
             </div>
           </nav>
-
-          <div>
-            <div className={styles.colHead}>Follow</div>
-            <div className={styles.social}>
-              {SOCIAL.map((l) => (
-                <a key={l} href="#" onClick={noop}>
-                  {l}
-                </a>
-              ))}
-            </div>
-          </div>
         </div>
 
         <div className={styles.rule} />
