@@ -93,7 +93,9 @@ export default function HorizontalReel() {
     if (!track) return;
     const vw = window.innerWidth;
     const maxShift = Math.max(0, track.scrollWidth - vw);
-    const travel = clamp01((reel - 0.08) / (0.9 - 0.08));
+    const rawTravel = clamp01((reel - 0.08) / (0.9 - 0.08));
+    const steppedTravel = Math.round(rawTravel * (SCENES.length - 1)) / (SCENES.length - 1);
+    const travel = rawTravel * 0.35 + steppedTravel * 0.65;
     const x = -travel * maxShift;
     track.style.transform = `translate3d(${x.toFixed(1)}px, 0, 0)`;
 
@@ -104,16 +106,18 @@ export default function HorizontalReel() {
     // per-frame focus + parallax (centres are transform-stable → read rect directly)
     const cx = vw / 2;
     for (let i = 0; i < SCENES.length; i++) {
-      // the section is visible → keep every clip playing (looped, muted)
+      // Keep only the focused clips decoding; paused videos resume in place.
       const v = videoRefs.current[i];
-      if (v && v.paused) v.play().catch(() => {});
-
       const f = frameRefs.current[i];
       if (!f) continue;
       const rect = f.getBoundingClientRect();
       const fc = rect.left + rect.width / 2;
       const off = fc - cx;
       const close = 1 - clamp01(Math.abs(off) / (vw * 0.62));
+      if (v) {
+        if (close > 0.38 && v.paused) v.play().catch(() => {});
+        else if (close <= 0.18 && !v.paused) v.pause();
+      }
       const scl = 0.82 + close * 0.2;
       const rot = clamp01((off / vw + 1) / 2) * 2 - 1; // -1..1
       f.style.transform = `perspective(1600px) rotateY(${(-rot * 7).toFixed(2)}deg) scale(${scl.toFixed(3)})`;

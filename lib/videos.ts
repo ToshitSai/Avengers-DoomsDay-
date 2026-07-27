@@ -51,13 +51,13 @@ export function scrubEl(el: HTMLVideoElement | null, t: number) {
   if (!el || el.readyState < 1) return;
   const dur = el.duration || 1;
   const clamped = Math.max(0, Math.min(dur - 0.03, t));
-  const frameStep = 1 / 30;
+  const frameStep = 1 / 24;
   const quantized = Math.round(clamped / frameStep) * frameStep;
   const now = performance.now();
   const last = lastSeekAt.get(el) ?? 0;
   const delta = Math.abs(el.currentTime - quantized);
 
-  if (delta > frameStep * 0.55 && now - last > 24) {
+  if (delta > frameStep * 0.65 && now - last > 38) {
     lastSeekAt.set(el, now);
     if (typeof el.fastSeek === "function") {
       try {

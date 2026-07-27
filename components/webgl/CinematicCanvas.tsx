@@ -21,8 +21,8 @@ import { getVisualQuality, qualityScale } from "@/lib/performance";
 export default function CinematicCanvas() {
   const quality = getVisualQuality();
   const scale = qualityScale(quality);
-  const dustCount = Math.round(7000 * scale);
-  const emberCount = Math.round(1600 * scale);
+  const dustCount = Math.round(5600 * scale);
+  const emberCount = Math.round(1100 * scale);
 
   return (
     <Canvas
@@ -35,7 +35,7 @@ export default function CinematicCanvas() {
         premultipliedAlpha: true,
         powerPreference: "high-performance",
       }}
-      dpr={quality === "high" ? [1, 1.35] : [0.75, 1]}
+      dpr={quality === "high" ? [0.9, 1.2] : [0.65, 0.95]}
       camera={{ position: [0, 0, 6], fov: 45, near: 0.1, far: 120 }}
       onCreated={({ gl, scene }) => {
         gl.setClearColor(0x000000, 0); // fully transparent so the video shows

@@ -7,6 +7,7 @@ import { useExperience } from "@/lib/store";
 import { signals } from "@/lib/signals";
 import { getVideoEl, scrubEl } from "@/lib/videos";
 import { VIDEO, SCROLL, TIMELINE_UNITS } from "@/lib/constants";
+import { useSectionAutoAdvance } from "@/lib/useSectionAutoAdvance";
 
 import CinematicCanvas from "@/components/webgl/CinematicCanvas";
 import VideoLayer from "@/components/overlays/VideoLayer";
@@ -62,6 +63,7 @@ const T = {
 export default function Experience() {
   const [mounted, setMounted] = useState(false);
   useLenis();
+  useSectionAutoAdvance();
   const trackRef = useRef<HTMLDivElement>(null);
   const builtRef = useRef(false);
 
