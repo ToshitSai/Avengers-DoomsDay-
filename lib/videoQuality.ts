@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 
+type VideoQualityMode = "adaptive" | "smooth";
+
 function canUse4kVideo() {
   if (typeof window === "undefined") return false;
 
@@ -19,24 +21,24 @@ export function video4kPath(src: string) {
   return fileName ? `/videos/4k/${fileName}` : src;
 }
 
-export function useVideoSource(src: string) {
+export function useVideoSource(src: string, mode: VideoQualityMode = "adaptive") {
   const [resolved, setResolved] = useState(src);
 
   useEffect(() => {
-    setResolved(canUse4kVideo() ? video4kPath(src) : src);
-  }, [src]);
+    setResolved(mode === "adaptive" && canUse4kVideo() ? video4kPath(src) : src);
+  }, [src, mode]);
 
   return resolved;
 }
 
-export function useVideoSources(sources: readonly string[]) {
+export function useVideoSources(sources: readonly string[], mode: VideoQualityMode = "adaptive") {
   const key = sources.join("|");
   const [resolved, setResolved] = useState(() => [...sources]);
 
   useEffect(() => {
-    const use4k = canUse4kVideo();
+    const use4k = mode === "adaptive" && canUse4kVideo();
     setResolved(sources.map((src) => (use4k ? video4kPath(src) : src)));
-  }, [key]);
+  }, [key, mode]);
 
   return resolved;
 }

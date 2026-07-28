@@ -50,6 +50,8 @@ export default function HorizontalReel() {
   const layerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
+  const travelRef = useRef(0);
+  const lastFrameRef = useRef(0);
   const frameRefs = useRef<(HTMLDivElement | null)[]>([]);
   const innerRefs = useRef<(HTMLDivElement | null)[]>([]);
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
@@ -59,7 +61,7 @@ export default function HorizontalReel() {
     "/videos/char-blackpanther.mp4",
     "/videos/char-cyclops.mp4",
     "/videos/char-mystique.mp4",
-  ]);
+  ], "smooth");
 
   // guarantee muted inline playback so programmatic play() is never blocked
   useEffect(() => {
@@ -71,7 +73,7 @@ export default function HorizontalReel() {
     });
   }, []);
 
-  useRaf(() => {
+  useRaf((frameTime) => {
     const reel = signals.reel;
     const layer = layerRef.current;
     if (!layer) return;
@@ -101,8 +103,12 @@ export default function HorizontalReel() {
     const vw = window.innerWidth;
     const maxShift = Math.max(0, track.scrollWidth - vw);
     const rawTravel = clamp01((reel - 0.08) / (0.9 - 0.08));
-    const steppedTravel = Math.round(rawTravel * (SCENES.length - 1)) / (SCENES.length - 1);
-    const travel = rawTravel * 0.35 + steppedTravel * 0.65;
+    const lastFrame = lastFrameRef.current || frameTime;
+    const dt = Math.min(0.05, Math.max(0.001, (frameTime - lastFrame) / 1000));
+    lastFrameRef.current = frameTime;
+    const follow = 1 - Math.pow(0.0005, dt);
+    travelRef.current += (rawTravel - travelRef.current) * follow;
+    const travel = travelRef.current;
     const x = -travel * maxShift;
     track.style.transform = `translate3d(${x.toFixed(1)}px, 0, 0)`;
 
@@ -112,8 +118,22 @@ export default function HorizontalReel() {
 
     // per-frame focus + parallax (centres are transform-stable → read rect directly)
     const cx = vw / 2;
+    let activeIndex = -1;
+    let activeClose = 0.42;
     for (let i = 0; i < SCENES.length; i++) {
-      // Keep only the focused clips decoding; paused videos resume in place.
+      const f = frameRefs.current[i];
+      if (!f) continue;
+      const rect = f.getBoundingClientRect();
+      const fc = rect.left + rect.width / 2;
+      const off = fc - cx;
+      const close = 1 - clamp01(Math.abs(off) / (vw * 0.62));
+      if (close > activeClose) {
+        activeClose = close;
+        activeIndex = i;
+      }
+    }
+
+    for (let i = 0; i < SCENES.length; i++) {
       const v = videoRefs.current[i];
       const f = frameRefs.current[i];
       if (!f) continue;
@@ -122,8 +142,8 @@ export default function HorizontalReel() {
       const off = fc - cx;
       const close = 1 - clamp01(Math.abs(off) / (vw * 0.62));
       if (v) {
-        if (close > 0.38 && v.paused) v.play().catch(() => {});
-        else if (close <= 0.18 && !v.paused) v.pause();
+        if (i === activeIndex && v.paused) v.play().catch(() => {});
+        else if (i !== activeIndex && !v.paused) v.pause();
       }
       const scl = 0.82 + close * 0.2;
       const rot = clamp01((off / vw + 1) / 2) * 2 - 1; // -1..1

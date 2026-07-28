@@ -69,6 +69,8 @@ const smoothstep = (a: number, b: number, x: number) => {
 export default function CharacterOrbit() {
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
+  const baseRef = useRef(0);
+  const lastFrameRef = useRef(0);
   const videoSources = useVideoSources([
     "/videos/char-doom.mp4",
     "/videos/char-blackpanther.mp4",
@@ -76,7 +78,7 @@ export default function CharacterOrbit() {
     "/videos/char-mystique.mp4",
     "/videos/char-gambit.mp4",
     "/videos/char-namor.mp4",
-  ]);
+  ], "smooth");
 
   // Guarantee muted inline playback (works around React not always reflecting the
   // `muted` attribute) so programmatic play() is never blocked by autoplay policy.
@@ -89,7 +91,7 @@ export default function CharacterOrbit() {
     });
   }, []);
 
-  useRaf(() => {
+  useRaf((frameTime) => {
     const s = signals.showcase;
     const t = signals.time;
     const vw = window.innerWidth;
@@ -98,15 +100,29 @@ export default function CharacterOrbit() {
     const wantPlay = s > 0.006; // play while the section is (near) visible
     const Rx = vw * 0.3; // horizontal orbit radius
     const Ry = vh * 0.15; // vertical tilt (front lower, back higher)
-    const stepped = Math.round(s * 6) / 6;
-    const easedS = lerp(s, stepped, 0.55);
-    const base = easedS * TAU * 0.85 + t * 0.026; // section auto-steps; idle stays subtle
+    const lastFrame = lastFrameRef.current || frameTime;
+    const dt = Math.min(0.05, Math.max(0.001, (frameTime - lastFrame) / 1000));
+    lastFrameRef.current = frameTime;
+    const targetBase = s * TAU * 0.85 + t * 0.018; // continuous orbit, no stepped jumps
+    const follow = 1 - Math.pow(0.0008, dt);
+    baseRef.current += (targetBase - baseRef.current) * follow;
+    const base = baseRef.current;
     const N = CHARACTERS.length;
+
+    let activeIndex = -1;
+    let activeDepth = 0.45;
+    for (let i = 0; i < N; i++) {
+      const depth = Math.cos(base + i * (TAU / N));
+      if (depth > activeDepth) {
+        activeDepth = depth;
+        activeIndex = i;
+      }
+    }
 
     for (let i = 0; i < N; i++) {
       const vid = videoRefs.current[i];
       if (vid) {
-        const activeVideo = wantPlay && Math.cos(base + i * (TAU / CHARACTERS.length)) > 0.45;
+        const activeVideo = wantPlay && i === activeIndex;
         if (activeVideo && vid.paused) vid.play().catch(() => {});
         else if (!activeVideo && !vid.paused) vid.pause();
       }

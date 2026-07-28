@@ -16,9 +16,9 @@ export default function VideoLayer() {
   const marvelRef = useRef<HTMLVideoElement>(null);
   const heroRef = useRef<HTMLVideoElement>(null);
   const finaleRef = useRef<HTMLVideoElement>(null);
-  const marvelSrc = useVideoSource(ASSETS.marvelVideo);
-  const heroSrc = useVideoSource(ASSETS.heroVideo);
-  const finaleSrc = useVideoSource(ASSETS.finaleVideo);
+  const marvelSrc = useVideoSource(ASSETS.marvelVideo, "smooth");
+  const heroSrc = useVideoSource(ASSETS.heroVideo, "smooth");
+  const finaleSrc = useVideoSource(ASSETS.finaleVideo, "smooth");
 
   useEffect(() => {
     const m = marvelRef.current;
