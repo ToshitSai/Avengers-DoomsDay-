@@ -1,125 +1,118 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { TIMELINE_UNITS } from "@/lib/constants";
 
 type LenisLike = {
-  scrollTo: (target: number, options?: { duration?: number; easing?: (t: number) => number; immediate?: boolean }) => void;
+  scrollTo: (
+    target: number,
+    options?: {
+      duration?: number;
+      easing?: (t: number) => number;
+      immediate?: boolean;
+      lock?: boolean;
+      force?: boolean;
+    },
+  ) => void;
 };
 
-type WindowWithLenis = Window & { __lenis?: LenisLike };
-
-type AutoRange = {
-  start: number;
-  end: number;
-  minDuration: number;
-  maxDuration: number;
+type WindowWithLenis = Window & {
+  __lenis?: LenisLike;
+  __cinematicAutopilot?: boolean;
 };
 
-const AUTO_RANGES: AutoRange[] = [
-  { start: 1.28, end: 3.95, minDuration: 2.8, maxDuration: 4.4 }, // Marvel intro video
-  { start: 7.65, end: 11.35, minDuration: 3.4, maxDuration: 5.4 }, // hero video
-  { start: 11.65, end: 16.55, minDuration: 4.2, maxDuration: 6.6 }, // character cards
-  { start: 24.35, end: 31.45, minDuration: 5.2, maxDuration: 8.2 }, // horizontal reel
-  { start: 31.55, end: 38.55, minDuration: 5.2, maxDuration: 8.6 }, // finale video
-];
+const MIN_GESTURE_DELTA = 8;
+const TOUCH_GESTURE_DELTA = 34;
+const MIN_DURATION = 10;
+const FULL_RUN_DURATION = 58;
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
-const easeInOutCubic = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+const steady = (t: number) => t;
 
 function maxScroll() {
   return Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
 }
 
-function timelineUnitFromScroll() {
-  return (window.scrollY / maxScroll()) * TIMELINE_UNITS;
+function stopEvent(event: Event) {
+  event.preventDefault();
+  event.stopPropagation();
+  event.stopImmediatePropagation();
 }
 
-function scrollTopFromTimelineUnit(unit: number) {
-  return clamp((unit / TIMELINE_UNITS) * maxScroll(), 0, maxScroll());
-}
-
-function currentRange(unit: number) {
-  return AUTO_RANGES.find(({ start, end }) => unit >= start && unit <= end) ?? null;
-}
-
-function rangeTarget(range: AutoRange, unit: number, direction: 1 | -1) {
-  const target = direction > 0 ? range.end : range.start;
-  const remaining = Math.abs(target - unit);
-  if (remaining < 0.12) return null;
-  return target;
-}
-
-function durationFor(range: AutoRange, unit: number, target: number) {
-  const rangeSize = Math.max(0.001, range.end - range.start);
-  const progress = Math.abs(target - unit) / rangeSize;
-  return clamp(range.maxDuration * progress, range.minDuration, range.maxDuration);
-}
-
-function scrollToUnit(unit: number, duration: number) {
-  const target = scrollTopFromTimelineUnit(unit);
+function scrollToPosition(target: number, duration: number) {
   const lenis = (window as WindowWithLenis).__lenis;
   if (lenis) {
-    lenis.scrollTo(target, { duration, easing: easeInOutCubic });
+    lenis.scrollTo(target, {
+      duration,
+      easing: steady,
+      lock: true,
+      force: true,
+    });
     return;
   }
+
   window.scrollTo({ top: target, behavior: "smooth" });
 }
 
 function stopAutoScroll() {
   const lenis = (window as WindowWithLenis).__lenis;
   if (lenis) {
-    lenis.scrollTo(window.scrollY, { immediate: true });
+    lenis.scrollTo(window.scrollY, { immediate: true, force: true });
     return;
   }
+
   window.scrollTo({ top: window.scrollY });
 }
 
+function targetForDirection(direction: 1 | -1) {
+  const max = maxScroll();
+  const current = window.scrollY;
+  if (direction > 0) return max;
+  return current > window.innerHeight * 0.35 ? 0 : max;
+}
+
+function durationForTarget(target: number) {
+  const max = maxScroll();
+  const distance = Math.abs(target - window.scrollY);
+  const progress = clamp(distance / max, 0, 1);
+  return clamp(FULL_RUN_DURATION * progress, MIN_DURATION, FULL_RUN_DURATION);
+}
+
 export function useSectionAutoAdvance() {
-  const autoUntilRef = useRef(0);
+  const runningRef = useRef(false);
   const timerRef = useRef<number | null>(null);
   const touchStartYRef = useRef<number | null>(null);
 
   useEffect(() => {
-    const clearAuto = () => {
+    const w = window as WindowWithLenis;
+
+    const clearRun = () => {
       if (timerRef.current != null) {
         window.clearTimeout(timerRef.current);
         timerRef.current = null;
       }
-      autoUntilRef.current = 0;
+      runningRef.current = false;
+      w.__cinematicAutopilot = false;
     };
 
-    const interruptAuto = () => {
-      clearAuto();
-      stopAutoScroll();
-    };
+    const startRun = (direction: 1 | -1) => {
+      if (runningRef.current) return true;
 
-    const startAuto = (direction: 1 | -1) => {
-      const now = performance.now();
-      if (autoUntilRef.current > now) {
-        interruptAuto();
-        return false;
-      }
+      const target = targetForDirection(direction);
+      if (Math.abs(target - window.scrollY) < 12) return false;
 
-      const unit = timelineUnitFromScroll();
-      const range = currentRange(unit);
-      if (!range) return false;
-
-      const target = rangeTarget(range, unit, direction);
-      if (target == null) return false;
-
-      const duration = durationFor(range, unit, target);
-      autoUntilRef.current = now + duration * 1000 + 250;
+      const duration = durationForTarget(target);
+      runningRef.current = true;
+      w.__cinematicAutopilot = true;
       if (timerRef.current != null) window.clearTimeout(timerRef.current);
-      timerRef.current = window.setTimeout(clearAuto, duration * 1000 + 300);
-      scrollToUnit(target, duration);
+      timerRef.current = window.setTimeout(clearRun, duration * 1000 + 500);
+      scrollToPosition(target, duration);
       return true;
     };
 
     const onWheel = (event: WheelEvent) => {
-      if (Math.abs(event.deltaY) < 8) return;
-      const handled = startAuto(event.deltaY > 0 ? 1 : -1);
-      if (handled) event.preventDefault();
+      if (Math.abs(event.deltaY) < MIN_GESTURE_DELTA) return;
+      const handled = startRun(event.deltaY > 0 ? 1 : -1);
+      if (handled) stopEvent(event);
     };
 
     const onTouchStart = (event: TouchEvent) => {
@@ -132,24 +125,44 @@ export function useSectionAutoAdvance() {
       if (startY == null || currentY == null) return;
 
       const delta = startY - currentY;
-      if (Math.abs(delta) < 42) return;
+      if (Math.abs(delta) < TOUCH_GESTURE_DELTA) return;
+      touchStartYRef.current = currentY;
 
-      const handled = startAuto(delta > 0 ? 1 : -1);
-      if (handled) {
-        touchStartYRef.current = currentY;
-        event.preventDefault();
+      const handled = startRun(delta > 0 ? 1 : -1);
+      if (handled) stopEvent(event);
+    };
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        if (runningRef.current) {
+          clearRun();
+          stopAutoScroll();
+          stopEvent(event);
+        }
+        return;
+      }
+
+      if (["ArrowDown", "PageDown", " ", "Enter"].includes(event.key)) {
+        if (startRun(1)) stopEvent(event);
+        return;
+      }
+
+      if (["ArrowUp", "PageUp", "Home"].includes(event.key)) {
+        if (startRun(-1)) stopEvent(event);
       }
     };
 
-    window.addEventListener("wheel", onWheel, { passive: false });
-    window.addEventListener("touchstart", onTouchStart, { passive: true });
-    window.addEventListener("touchmove", onTouchMove, { passive: false });
+    window.addEventListener("wheel", onWheel, { passive: false, capture: true });
+    window.addEventListener("touchstart", onTouchStart, { passive: true, capture: true });
+    window.addEventListener("touchmove", onTouchMove, { passive: false, capture: true });
+    window.addEventListener("keydown", onKeyDown, { passive: false, capture: true });
 
     return () => {
-      clearAuto();
-      window.removeEventListener("wheel", onWheel);
-      window.removeEventListener("touchstart", onTouchStart);
-      window.removeEventListener("touchmove", onTouchMove);
+      clearRun();
+      window.removeEventListener("wheel", onWheel, { capture: true });
+      window.removeEventListener("touchstart", onTouchStart, { capture: true });
+      window.removeEventListener("touchmove", onTouchMove, { capture: true });
+      window.removeEventListener("keydown", onKeyDown, { capture: true });
     };
   }, []);
 }
