@@ -106,7 +106,7 @@ export default function CharacterOrbit() {
     for (let i = 0; i < N; i++) {
       const vid = videoRefs.current[i];
       if (vid) {
-        const activeVideo = wantPlay && Math.cos(base + i * (TAU / CHARACTERS.length)) > 0.12;
+        const activeVideo = wantPlay && Math.cos(base + i * (TAU / CHARACTERS.length)) > 0.45;
         if (activeVideo && vid.paused) vid.play().catch(() => {});
         else if (!activeVideo && !vid.paused) vid.pause();
       }

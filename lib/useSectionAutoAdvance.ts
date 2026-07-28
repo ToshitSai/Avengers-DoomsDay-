@@ -9,84 +9,116 @@ type LenisLike = {
 
 type WindowWithLenis = Window & { __lenis?: LenisLike };
 
-const HEAVY_SECTION_POINTS = [
-  1.4, 2.2, 3.0, 3.8,
-  7.8, 8.65, 9.5, 10.35, 11.2,
-  11.8, 12.6, 13.35, 14.1, 14.85, 15.6, 16.35,
-  24.5, 26.0, 27.5, 29.0, 30.5, 31.3,
-  31.7, 33.05, 34.4, 35.75, 37.1, 38.4,
-] as const;
+type AutoRange = {
+  start: number;
+  end: number;
+  minDuration: number;
+  maxDuration: number;
+};
 
-const HEAVY_RANGES = [
-  [1.28, 3.95],
-  [7.65, 11.35],
-  [11.65, 16.55],
-  [24.35, 31.45],
-  [31.55, 38.55],
-] as const;
+const AUTO_RANGES: AutoRange[] = [
+  { start: 1.28, end: 3.95, minDuration: 2.8, maxDuration: 4.4 }, // Marvel intro video
+  { start: 7.65, end: 11.35, minDuration: 3.4, maxDuration: 5.4 }, // hero video
+  { start: 11.65, end: 16.55, minDuration: 4.2, maxDuration: 6.6 }, // character cards
+  { start: 24.35, end: 31.45, minDuration: 5.2, maxDuration: 8.2 }, // horizontal reel
+  { start: 31.55, end: 38.55, minDuration: 5.2, maxDuration: 8.6 }, // finale video
+];
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
-const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
+const easeInOutCubic = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+
+function maxScroll() {
+  return Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+}
 
 function timelineUnitFromScroll() {
-  const maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
-  return (window.scrollY / maxScroll) * TIMELINE_UNITS;
+  return (window.scrollY / maxScroll()) * TIMELINE_UNITS;
 }
 
 function scrollTopFromTimelineUnit(unit: number) {
-  const maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
-  return clamp((unit / TIMELINE_UNITS) * maxScroll, 0, maxScroll);
+  return clamp((unit / TIMELINE_UNITS) * maxScroll(), 0, maxScroll());
 }
 
-function isHeavyUnit(unit: number) {
-  return HEAVY_RANGES.some(([start, end]) => unit >= start && unit <= end);
+function currentRange(unit: number) {
+  return AUTO_RANGES.find(({ start, end }) => unit >= start && unit <= end) ?? null;
 }
 
-function nextPoint(unit: number, direction: 1 | -1) {
-  if (direction > 0) {
-    return HEAVY_SECTION_POINTS.find((point) => point > unit + 0.08) ?? null;
-  }
-
-  for (let i = HEAVY_SECTION_POINTS.length - 1; i >= 0; i--) {
-    const point = HEAVY_SECTION_POINTS[i];
-    if (point < unit - 0.08) return point;
-  }
-  return null;
+function rangeTarget(range: AutoRange, unit: number, direction: 1 | -1) {
+  const target = direction > 0 ? range.end : range.start;
+  const remaining = Math.abs(target - unit);
+  if (remaining < 0.12) return null;
+  return target;
 }
 
-function scrollToUnit(unit: number) {
+function durationFor(range: AutoRange, unit: number, target: number) {
+  const rangeSize = Math.max(0.001, range.end - range.start);
+  const progress = Math.abs(target - unit) / rangeSize;
+  return clamp(range.maxDuration * progress, range.minDuration, range.maxDuration);
+}
+
+function scrollToUnit(unit: number, duration: number) {
   const target = scrollTopFromTimelineUnit(unit);
   const lenis = (window as WindowWithLenis).__lenis;
   if (lenis) {
-    lenis.scrollTo(target, { duration: 1.05, easing: easeOutCubic });
+    lenis.scrollTo(target, { duration, easing: easeInOutCubic });
     return;
   }
   window.scrollTo({ top: target, behavior: "smooth" });
 }
 
+function stopAutoScroll() {
+  const lenis = (window as WindowWithLenis).__lenis;
+  if (lenis) {
+    lenis.scrollTo(window.scrollY, { immediate: true });
+    return;
+  }
+  window.scrollTo({ top: window.scrollY });
+}
+
 export function useSectionAutoAdvance() {
-  const lockUntilRef = useRef(0);
+  const autoUntilRef = useRef(0);
+  const timerRef = useRef<number | null>(null);
   const touchStartYRef = useRef<number | null>(null);
 
   useEffect(() => {
-    const step = (direction: 1 | -1) => {
+    const clearAuto = () => {
+      if (timerRef.current != null) {
+        window.clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+      autoUntilRef.current = 0;
+    };
+
+    const interruptAuto = () => {
+      clearAuto();
+      stopAutoScroll();
+    };
+
+    const startAuto = (direction: 1 | -1) => {
       const now = performance.now();
-      if (now < lockUntilRef.current) return false;
+      if (autoUntilRef.current > now) {
+        interruptAuto();
+        return false;
+      }
 
       const unit = timelineUnitFromScroll();
-      if (!isHeavyUnit(unit)) return false;
+      const range = currentRange(unit);
+      if (!range) return false;
 
-      const target = nextPoint(unit, direction);
-      if (target == null || !isHeavyUnit(target)) return false;
+      const target = rangeTarget(range, unit, direction);
+      if (target == null) return false;
 
-      lockUntilRef.current = now + 880;
-      scrollToUnit(target);
+      const duration = durationFor(range, unit, target);
+      autoUntilRef.current = now + duration * 1000 + 250;
+      if (timerRef.current != null) window.clearTimeout(timerRef.current);
+      timerRef.current = window.setTimeout(clearAuto, duration * 1000 + 300);
+      scrollToUnit(target, duration);
       return true;
     };
 
     const onWheel = (event: WheelEvent) => {
       if (Math.abs(event.deltaY) < 8) return;
-      const handled = step(event.deltaY > 0 ? 1 : -1);
+      const handled = startAuto(event.deltaY > 0 ? 1 : -1);
       if (handled) event.preventDefault();
     };
 
@@ -102,7 +134,7 @@ export function useSectionAutoAdvance() {
       const delta = startY - currentY;
       if (Math.abs(delta) < 42) return;
 
-      const handled = step(delta > 0 ? 1 : -1);
+      const handled = startAuto(delta > 0 ? 1 : -1);
       if (handled) {
         touchStartYRef.current = currentY;
         event.preventDefault();
@@ -114,6 +146,7 @@ export function useSectionAutoAdvance() {
     window.addEventListener("touchmove", onTouchMove, { passive: false });
 
     return () => {
+      clearAuto();
       window.removeEventListener("wheel", onWheel);
       window.removeEventListener("touchstart", onTouchStart);
       window.removeEventListener("touchmove", onTouchMove);
