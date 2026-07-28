@@ -24,7 +24,7 @@ const smoothstep = (a: number, b: number, x: number) => {
 export default function TitleReveal() {
   const layerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const titleSrc = useVideoSource(ASSETS.titleVideo);
+  const titleSrc = useVideoSource(ASSETS.titleVideo, "smooth");
 
   useEffect(() => {
     const v = videoRef.current;
