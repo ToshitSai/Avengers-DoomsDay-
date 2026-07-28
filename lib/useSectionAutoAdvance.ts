@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { TIMELINE_UNITS } from "@/lib/constants";
 
 type LenisLike = {
   scrollTo: (
@@ -22,14 +23,23 @@ type WindowWithLenis = Window & {
 
 const MIN_GESTURE_DELTA = 8;
 const TOUCH_GESTURE_DELTA = 34;
-const MIN_DURATION = 10;
-const FULL_RUN_DURATION = 58;
+const MIN_DURATION = 5;
+const OPENING_STOP_UNIT = 11.58;
+const OPENING_RUN_DURATION = 42;
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 const steady = (t: number) => t;
 
 function maxScroll() {
   return Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+}
+
+function timelineUnitFromScroll() {
+  return (window.scrollY / maxScroll()) * TIMELINE_UNITS;
+}
+
+function scrollTopFromTimelineUnit(unit: number) {
+  return clamp((unit / TIMELINE_UNITS) * maxScroll(), 0, maxScroll());
 }
 
 function stopEvent(event: Event) {
@@ -64,17 +74,23 @@ function stopAutoScroll() {
 }
 
 function targetForDirection(direction: 1 | -1) {
-  const max = maxScroll();
   const current = window.scrollY;
-  if (direction > 0) return max;
-  return current > window.innerHeight * 0.35 ? 0 : max;
+  const unit = timelineUnitFromScroll();
+
+  if (direction > 0) {
+    if (unit >= OPENING_STOP_UNIT - 0.08) return null;
+    return scrollTopFromTimelineUnit(OPENING_STOP_UNIT);
+  }
+
+  if (unit > OPENING_STOP_UNIT + 0.08) return null;
+  return current > window.innerHeight * 0.35 ? 0 : scrollTopFromTimelineUnit(OPENING_STOP_UNIT);
 }
 
 function durationForTarget(target: number) {
-  const max = maxScroll();
+  const openingTarget = Math.max(1, scrollTopFromTimelineUnit(OPENING_STOP_UNIT));
   const distance = Math.abs(target - window.scrollY);
-  const progress = clamp(distance / max, 0, 1);
-  return clamp(FULL_RUN_DURATION * progress, MIN_DURATION, FULL_RUN_DURATION);
+  const progress = clamp(distance / openingTarget, 0, 1);
+  return clamp(OPENING_RUN_DURATION * progress, MIN_DURATION, OPENING_RUN_DURATION);
 }
 
 export function useSectionAutoAdvance() {
@@ -98,6 +114,7 @@ export function useSectionAutoAdvance() {
       if (runningRef.current) return true;
 
       const target = targetForDirection(direction);
+      if (target == null) return false;
       if (Math.abs(target - window.scrollY) < 12) return false;
 
       const duration = durationForTarget(target);

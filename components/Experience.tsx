@@ -49,7 +49,7 @@ const T = {
   mcuEnd: 44.3,
   titleStart: 44.0, // Section 7 — AVENGERS DOOMSDAY title reveal fades in (overlap)
   titleFadeEnd: 44.9,
-  footerStart: 47.6, // the minimal footer rises at the very end
+  footerStart: 49.65, // the minimal footer rises only after the title has fully held
   // total is derived from SCROLL so the scroll↔time map never drifts; the last
   // tween (footer) ends here to pad the timeline.
   total: TIMELINE_UNITS,

@@ -79,8 +79,8 @@ export const SCROLL = {
   finaleScrub: 760, // the battle video scrubs frame-by-frame with scroll
   // ── Ending · Section 6 (MCU timeline artwork) + 7 (title reveal) + footer ──
   mcuPan: 560, // the tall MCU timeline pans vertically with scroll
-  titleHold: 300, // the AVENGERS DOOMSDAY title reveal autoplays/holds
-  footerReveal: 150, // the minimal footer rises at the very end
+  titleHold: 420, // the AVENGERS DOOMSDAY title reveal autoplays/holds
+  footerReveal: 120, // the minimal footer rises after the title has held clearly
 } as const;
 
 /**
