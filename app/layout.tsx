@@ -74,7 +74,15 @@ export default function RootLayout({
     <html lang="en" className={`${anton.variable} ${chakra.variable}`}>
       {/* suppressHydrationWarning: browser extensions (e.g. Grammarly) inject
           attributes on <body> before React hydrates — harmless, not our markup. */}
-      <body suppressHydrationWarning>{children}</body>
+      <body suppressHydrationWarning>
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "history.scrollRestoration='manual';if(location.hash){history.replaceState(null,'',location.pathname+location.search)};scrollTo(0,0);",
+          }}
+        />
+        {children}
+      </body>
     </html>
   );
 }

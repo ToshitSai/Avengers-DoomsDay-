@@ -82,6 +82,40 @@ export const signals: Signals = {
   lastStrike: -999,
 };
 
+export function resetSignals() {
+  signals.mx = 0;
+  signals.my = 0;
+  signals.mtx = 0;
+  signals.mty = 0;
+  signals.mwx = 0;
+  signals.mwy = 0;
+  signals.shake = 0;
+  signals.flash = 0;
+  signals.energy = 0;
+  signals.portal = 0;
+  signals.dolly = 0;
+  signals.reveal = 0;
+  signals.bgBlur = 0;
+  signals.collapse = 0;
+  signals.scroll = 0;
+  signals.shatter = 0;
+  signals.marvelT = 0;
+  signals.heroT = 0;
+  signals.marvelOp = 0;
+  signals.heroOp = 0;
+  signals.header = 0;
+  signals.showcase = 0;
+  signals.story = 0;
+  signals.reel = 0;
+  signals.finale = 0;
+  signals.finaleT = 0;
+  signals.mcu = 0;
+  signals.title = 0;
+  signals.footer = 0;
+  signals.strikeSeq = 0;
+  signals.lastStrike = -999;
+}
+
 export type StrikeDetail = {
   /** normalized screen x/y (-1..1) where the bolt roots */
   x: number;

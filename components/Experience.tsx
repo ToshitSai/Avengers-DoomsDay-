@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { gsap } from "@/lib/gsap";
 import { useLenis } from "@/lib/useLenis";
 import { useExperience } from "@/lib/store";
-import { signals } from "@/lib/signals";
+import { resetSignals, signals } from "@/lib/signals";
 import { getVideoEl, scrubEl } from "@/lib/videos";
 import { VIDEO, SCROLL, TIMELINE_UNITS } from "@/lib/constants";
 import { useSectionAutoAdvance } from "@/lib/useSectionAutoAdvance";
@@ -68,6 +68,12 @@ export default function Experience() {
   const trackRef = useRef<HTMLDivElement>(null);
   const builtRef = useRef(false);
 
+  useLayoutEffect(() => {
+    history.scrollRestoration = "manual";
+    window.scrollTo(0, 0);
+    resetSignals();
+  }, []);
+
   useEffect(() => setMounted(true), []);
 
   // ── pointer tracking + video decoder priming (no audio) ─────────
@@ -102,6 +108,8 @@ export default function Experience() {
   useEffect(() => {
     if (!mounted || builtRef.current || !trackRef.current) return;
     builtRef.current = true;
+    resetSignals();
+    window.scrollTo(0, 0);
     useExperience.getState().setPhase("intro");
 
     const heroThreshold = T.heroEnter / T.total;
