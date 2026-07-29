@@ -85,6 +85,8 @@ a {
   z-index: 1;
   overflow: hidden;
   background: #000;
+  contain: layout paint size;
+  transform: translateZ(0);
 }
 
 /* Video assets: true fullscreen, cover, no letterboxing. Sized by width/height
@@ -99,7 +101,9 @@ a {
   object-position: center;
   pointer-events: none;
   background: #000;
-  will-change: opacity;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  will-change: opacity, transform;
 }
 
 /* The Hero (portrait) trailer: shown WHOLE (object-fit: contain), centered, at

@@ -150,10 +150,10 @@ export default function Experience() {
 
             if (autopilot) {
               const lag = time - el.currentTime;
-              el.playbackRate = Math.max(0.85, Math.min(1.8, 1 + lag * 0.28));
-              if (lag > 2.4) {
+              el.playbackRate = Math.max(0.94, Math.min(1.12, 1 + lag * 0.08));
+              if (lag > 1.8) {
                 try {
-                  el.currentTime = Math.max(0, Math.min((el.duration || 1) - 0.03, time - 0.35));
+                  el.currentTime = Math.max(0, Math.min((el.duration || 1) - 0.03, time - 0.18));
                 } catch {
                   /* avoid interrupting playback if the browser rejects a correction */
                 }

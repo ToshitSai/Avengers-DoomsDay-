@@ -35,7 +35,7 @@ export default function CinematicCanvas() {
         premultipliedAlpha: true,
         powerPreference: "high-performance",
       }}
-      dpr={quality === "high" ? [0.75, 1] : [0.55, 0.82]}
+      dpr={quality === "high" ? [0.62, 0.88] : [0.48, 0.72]}
       camera={{ position: [0, 0, 6], fov: 45, near: 0.1, far: 120 }}
       onCreated={({ gl, scene }) => {
         gl.setClearColor(0x000000, 0); // fully transparent so the video shows
