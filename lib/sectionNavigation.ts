@@ -13,11 +13,16 @@ type WindowWithNavigation = Window & {
 
 export type SectionTarget = "overview" | "universe" | "heroes" | "trailers" | "tickets";
 
+const EXTERNAL_URLS: Partial<Record<SectionTarget, string>> = {
+  trailers: "https://youtu.be/irVNGjRFZGk?si=i9cDr5eShOvsRrWE",
+  tickets: "https://in.bookmyshow.com/movies/delhi/avengers-doomsday/ET00439706",
+};
+
 export const SECTION_NAV = [
   { label: "Overview", target: "overview" },
   { label: "Universe", target: "universe" },
   { label: "Heroes", target: "heroes" },
-  { label: "Trailers", target: "trailers" },
+  { label: "Trailer", target: "trailers" },
   { label: "Tickets", target: "tickets" },
 ] as const;
 
@@ -40,6 +45,12 @@ function scrollTopFromTimelineUnit(unit: number) {
 export function goToSection(target: SectionTarget) {
   if (typeof window === "undefined") return;
 
+  const externalUrl = EXTERNAL_URLS[target];
+  if (externalUrl) {
+    window.location.href = externalUrl;
+    return;
+  }
+
   const w = window as WindowWithNavigation;
   const top = scrollTopFromTimelineUnit(TARGET_UNITS[target]);
   window.dispatchEvent(new CustomEvent("section-transition"));
@@ -52,4 +63,8 @@ export function goToSection(target: SectionTarget) {
     }
     window.scrollTo({ top, behavior: "smooth" });
   }, 130);
+}
+
+export function sectionHref(target: SectionTarget) {
+  return EXTERNAL_URLS[target] ?? `#${target}`;
 }

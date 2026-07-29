@@ -3,7 +3,7 @@
 import { useRef } from "react";
 import { signals } from "@/lib/signals";
 import { useRaf } from "@/lib/useRaf";
-import { SECTION_NAV, goToSection } from "@/lib/sectionNavigation";
+import { SECTION_NAV, goToSection, sectionHref } from "@/lib/sectionNavigation";
 import styles from "./footer.module.css";
 
 const clamp01 = (x: number) => (x < 0 ? 0 : x > 1 ? 1 : x);
@@ -49,7 +49,7 @@ export default function SiteFooter() {
               {SECTION_NAV.map((item) => (
                 <a
                   key={item.target}
-                  href={`#${item.target}`}
+                  href={sectionHref(item.target)}
                   onClick={(e) => {
                     e.preventDefault();
                     goToSection(item.target);
