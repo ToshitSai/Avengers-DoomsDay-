@@ -29,9 +29,9 @@ export default function SceneDriver() {
     signals.mx += (signals.mtx - signals.mx) * k;
     signals.my += (signals.mty - signals.my) * k;
 
-    // Energy-scaled auto lightning while the storm rages. Threshold 0.2 keeps
-    // the calm hero atmosphere (energy ~0.15) lightning-free.
-    if (signals.energy > 0.2 && signals.portal < 0.02) {
+    // Energy-scaled auto lightning only in the opening storm. Later sections
+    // keep the green atmosphere without random flashes across the website.
+    if (signals.scroll < 0.095 && signals.energy > 0.2 && signals.portal < 0.02) {
       strikeTimer.current += d;
       if (strikeTimer.current >= nextGap.current) {
         strikeTimer.current = 0;

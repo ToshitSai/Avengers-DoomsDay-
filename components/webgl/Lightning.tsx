@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
-import { onStrike, signals, type StrikeDetail } from "@/lib/signals";
+import { onStrike, type StrikeDetail } from "@/lib/signals";
 import type { VisualQuality } from "@/lib/performance";
 
 const HALF_W = 5.4;
@@ -171,9 +171,7 @@ export default function Lightning({ quality = "high" }: { quality?: VisualQualit
         continue;
       }
       b.life -= d / b.ttl;
-      // strobe flicker
-      const flick = 0.35 + 0.65 * Math.abs(Math.sin(signals.time * 90 + b.ttl * 30));
-      b.mat.uniforms.uOpacity.value = Math.max(0, b.life) * flick * 1.6;
+      b.mat.uniforms.uOpacity.value = Math.max(0, b.life) * 0.9;
     }
   });
 

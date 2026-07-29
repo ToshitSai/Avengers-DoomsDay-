@@ -16,7 +16,6 @@ import StoryStack from "@/components/overlays/StoryStack";
 import HorizontalReel from "@/components/overlays/HorizontalReel";
 import TimelineImage from "@/components/overlays/TimelineImage";
 import TitleReveal from "@/components/overlays/TitleReveal";
-import FlashOverlay from "@/components/overlays/FlashOverlay";
 import SectionTransition from "@/components/overlays/SectionTransition";
 import CinematicText from "@/components/overlays/CinematicText";
 import ScrollCue from "@/components/ui/ScrollCue";
@@ -299,7 +298,6 @@ export default function Experience() {
         <CharacterOrbit />
         {/* transparent green atmosphere on top (z-index 3) */}
         {mounted && <CinematicCanvas />}
-        <FlashOverlay />
         <SectionTransition />
         <CinematicText />
       </div>

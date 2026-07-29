@@ -136,7 +136,7 @@ export function emitStrike(detail: StrikeDetail) {
   signals.lastStrike = signals.time;
   // Impulse into the shared channels — read + decayed by the render loop.
   signals.shake = Math.min(1.4, signals.shake + detail.power * (detail.mega ? 1.4 : 0.7));
-  signals.flash = Math.min(0.95, signals.flash + detail.power * (detail.mega ? 0.9 : 0.32));
+  signals.flash = 0;
   bus?.dispatchEvent(new CustomEvent<StrikeDetail>("strike", { detail }));
 }
 
