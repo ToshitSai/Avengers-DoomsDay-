@@ -151,8 +151,8 @@ export default function StoryStack() {
       // how far the NEXT panel has risen over this one (0..1)
       const cov = i < N - 1 ? clamp01((s - (i + 1) * step) / step) : 0;
 
-      // fully below the fold, or fully hidden behind the next panel → don't paint
-      if (r <= 0.0006 || cov >= 0.9994) {
+      // fully below the fold -> don't paint; covered panels stay underneath
+      if (r <= 0.0006) {
         if (panel.style.visibility !== "hidden") panel.style.visibility = "hidden";
         continue;
       }

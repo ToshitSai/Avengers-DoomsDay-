@@ -90,13 +90,13 @@
   color: #ff2d55;
   transform: translate(-3px, 0);
   opacity: 0.6;
-  animation: chromaA 1.6s steps(2) infinite;
+  animation: chromaA 2.8s ease-in-out infinite alternate;
 }
 .chroma::after {
   color: #00fff2;
   transform: translate(3px, 0);
   opacity: 0.6;
-  animation: chromaB 1.9s steps(2) infinite;
+  animation: chromaB 3s ease-in-out infinite alternate;
 }
 @keyframes chromaA {
   0%, 100% { transform: translate(-3px, 0); }

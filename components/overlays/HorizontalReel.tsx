@@ -118,21 +118,6 @@ export default function HorizontalReel() {
 
     // per-frame focus + parallax (centres are transform-stable → read rect directly)
     const cx = vw / 2;
-    let activeIndex = -1;
-    let activeClose = 0.42;
-    for (let i = 0; i < SCENES.length; i++) {
-      const f = frameRefs.current[i];
-      if (!f) continue;
-      const rect = f.getBoundingClientRect();
-      const fc = rect.left + rect.width / 2;
-      const off = fc - cx;
-      const close = 1 - clamp01(Math.abs(off) / (vw * 0.62));
-      if (close > activeClose) {
-        activeClose = close;
-        activeIndex = i;
-      }
-    }
-
     for (let i = 0; i < SCENES.length; i++) {
       const v = videoRefs.current[i];
       const f = frameRefs.current[i];
@@ -141,10 +126,7 @@ export default function HorizontalReel() {
       const fc = rect.left + rect.width / 2;
       const off = fc - cx;
       const close = 1 - clamp01(Math.abs(off) / (vw * 0.62));
-      if (v) {
-        if (i === activeIndex && v.paused) v.play().catch(() => {});
-        else if (i !== activeIndex && !v.paused) v.pause();
-      }
+      if (v && v.paused) v.play().catch(() => {});
       const scl = 0.82 + close * 0.2;
       const rot = clamp01((off / vw + 1) / 2) * 2 - 1; // -1..1
       f.style.transform = `perspective(1600px) rotateY(${(-rot * 7).toFixed(2)}deg) scale(${scl.toFixed(3)})`;
@@ -189,7 +171,7 @@ export default function HorizontalReel() {
                     muted
                     loop
                     playsInline
-                    preload="metadata"
+                    preload="auto"
                     disablePictureInPicture
                   />
                   <span className={styles.scrim} />

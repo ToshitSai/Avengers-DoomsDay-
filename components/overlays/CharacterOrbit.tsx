@@ -97,7 +97,7 @@ export default function CharacterOrbit() {
     const vw = window.innerWidth;
     const vh = window.innerHeight;
 
-    const wantPlay = s > 0.006; // play while the section is (near) visible
+    const wantPlay = s > 0.006; // keep cards warm while the section is visible
     const Rx = vw * 0.3; // horizontal orbit radius
     const Ry = vh * 0.15; // vertical tilt (front lower, back higher)
     const lastFrame = lastFrameRef.current || frameTime;
@@ -109,22 +109,11 @@ export default function CharacterOrbit() {
     const base = baseRef.current;
     const N = CHARACTERS.length;
 
-    let activeIndex = -1;
-    let activeDepth = 0.45;
-    for (let i = 0; i < N; i++) {
-      const depth = Math.cos(base + i * (TAU / N));
-      if (depth > activeDepth) {
-        activeDepth = depth;
-        activeIndex = i;
-      }
-    }
-
     for (let i = 0; i < N; i++) {
       const vid = videoRefs.current[i];
       if (vid) {
-        const activeVideo = wantPlay && i === activeIndex;
-        if (activeVideo && vid.paused) vid.play().catch(() => {});
-        else if (!activeVideo && !vid.paused) vid.pause();
+        if (wantPlay && vid.paused) vid.play().catch(() => {});
+        else if (!wantPlay && !vid.paused) vid.pause();
       }
 
       const card = cardRefs.current[i];
@@ -186,7 +175,7 @@ export default function CharacterOrbit() {
             muted
             loop
             playsInline
-            preload="metadata"
+            preload="auto"
             disablePictureInPicture
           />
           <div className={styles.grad} />
