@@ -109,11 +109,22 @@ export default function CharacterOrbit() {
     const base = baseRef.current;
     const N = CHARACTERS.length;
 
+    let activeIndex = -1;
+    let activeDepth = 0.45;
+    for (let i = 0; i < N; i++) {
+      const depth = Math.cos(base + i * (TAU / N));
+      if (depth > activeDepth) {
+        activeDepth = depth;
+        activeIndex = i;
+      }
+    }
+
     for (let i = 0; i < N; i++) {
       const vid = videoRefs.current[i];
       if (vid) {
-        if (wantPlay && vid.paused) vid.play().catch(() => {});
-        else if (!wantPlay && !vid.paused) vid.pause();
+        const shouldPlay = wantPlay && i === activeIndex;
+        if (shouldPlay && vid.paused) vid.play().catch(() => {});
+        else if (!shouldPlay && !vid.paused) vid.pause();
       }
 
       const card = cardRefs.current[i];

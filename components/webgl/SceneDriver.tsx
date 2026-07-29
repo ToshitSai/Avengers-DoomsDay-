@@ -1,19 +1,14 @@
 "use client";
 
-import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
-import * as THREE from "three";
-import { signals, emitStrike } from "@/lib/signals";
+import { signals } from "@/lib/signals";
 
 /**
  * The heartbeat. One component owns the shared clock, decays the impulse
- * channels, smooths the pointer, and spawns lightning while the storm rages.
+ * channels, and smooths the pointer.
  * Everything else just reads `signals`.
  */
 export default function SceneDriver() {
-  const strikeTimer = useRef(0);
-  const nextGap = useRef(0.6);
-
   useFrame((state, dt) => {
     const d = Math.min(dt, 1 / 20); // clamp huge tab-switch deltas
     signals.time = state.clock.getElapsedTime();
@@ -29,22 +24,6 @@ export default function SceneDriver() {
     signals.mx += (signals.mtx - signals.mx) * k;
     signals.my += (signals.mty - signals.my) * k;
 
-    // Energy-scaled auto lightning only in the opening storm. Later sections
-    // keep the green atmosphere without random flashes across the website.
-    if (signals.scroll < 0.095 && signals.energy > 0.2 && signals.portal < 0.02) {
-      strikeTimer.current += d;
-      if (strikeTimer.current >= nextGap.current) {
-        strikeTimer.current = 0;
-        const e = signals.energy;
-        // more energy -> tighter gaps and stronger bolts
-        nextGap.current = THREE.MathUtils.lerp(1.4, 0.11, e) * (0.6 + Math.random() * 0.8);
-        emitStrike({
-          x: (Math.random() - 0.5) * 1.7,
-          y: 0.45 + Math.random() * 0.5,
-          power: 0.4 + e * 0.55 + Math.random() * 0.15,
-        });
-      }
-    }
   });
 
   return null;

@@ -6,8 +6,6 @@ import SceneDriver from "./SceneDriver";
 import CameraRig from "./CameraRig";
 import ParticleField from "./ParticleField";
 import VolumetricFog from "./VolumetricFog";
-import Lightning from "./Lightning";
-import Sparks from "./Sparks";
 import Portal from "./Portal";
 import Showcase from "./showcase/Showcase";
 import { getVisualQuality, qualityScale } from "@/lib/performance";
@@ -73,8 +71,6 @@ export default function CinematicCanvas() {
         opacity={0.9}
       />
 
-      <Lightning quality={quality} />
-      <Sparks quality={quality} />
       <Portal />
 
       {/* Phase 2 · Section 2 — character showcase (self-gates on signals.showcase) */}

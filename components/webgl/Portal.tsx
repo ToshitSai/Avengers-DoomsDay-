@@ -8,7 +8,7 @@ import { signals } from "@/lib/signals";
 
 /**
  * The rift. A polar-coordinate energy tunnel: swirling fbm filaments around a
- * dark eye, a blazing rim, and a center that whites out as the camera dives
+ * dark eye, a blazing rim, and a softened center glow as the camera dives
  * through. Driven entirely by `signals.portal` (0 = closed, 1 = fully through).
  */
 export default function Portal() {
@@ -57,11 +57,12 @@ export default function Portal() {
           vec3 col = mix(uColorDeep, uColorMid, body);
           col = mix(col, uColorBright, ring + body * 0.35);
 
-          // center whites out on the dive
-          float flash = smoothstep(0.55, 0.0, r) * uDive;
-          col += flash * vec3(1.0);
+          // Soft center glow on the dive. Keep it green and low-alpha so the
+          // transition never reads as a white blink over the videos.
+          float flash = smoothstep(0.55, 0.0, r) * uDive * 0.22;
+          col += flash * uColorBright;
 
-          float alpha = (ring + body + flash) * rimFade * uOpen;
+          float alpha = (ring + body + flash * 0.45) * rimFade * uOpen;
           if(alpha < 0.004) discard;
           gl_FragColor = vec4(col, alpha);
         }
