@@ -17,7 +17,7 @@ export function getVisualQuality(): VisualQuality {
 }
 
 export function qualityScale(quality: VisualQuality) {
-  if (quality === "low") return 0.42;
-  if (quality === "medium") return 0.68;
-  return 1;
+  if (quality === "low") return 0.3;
+  if (quality === "medium") return 0.52;
+  return 0.76;
 }

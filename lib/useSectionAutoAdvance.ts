@@ -25,7 +25,10 @@ const MIN_GESTURE_DELTA = 8;
 const TOUCH_GESTURE_DELTA = 34;
 const MIN_DURATION = 5;
 const OPENING_STOP_UNIT = 11.58;
-const OPENING_RUN_DURATION = 42;
+const OPENING_RUN_DURATION = 56;
+const FINALE_START_UNIT = 31.55;
+const FINALE_STOP_UNIT = 38.52;
+const FINALE_RUN_DURATION = 27;
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 const steady = (t: number) => t;
@@ -78,19 +81,30 @@ function targetForDirection(direction: 1 | -1) {
   const unit = timelineUnitFromScroll();
 
   if (direction > 0) {
-    if (unit >= OPENING_STOP_UNIT - 0.08) return null;
-    return scrollTopFromTimelineUnit(OPENING_STOP_UNIT);
+    if (unit < OPENING_STOP_UNIT - 0.08) return scrollTopFromTimelineUnit(OPENING_STOP_UNIT);
+    if (unit >= FINALE_START_UNIT - 0.25 && unit < FINALE_STOP_UNIT - 0.08) {
+      return scrollTopFromTimelineUnit(FINALE_STOP_UNIT);
+    }
+    return null;
   }
 
+  if (unit > FINALE_START_UNIT + 0.08 && unit <= FINALE_STOP_UNIT + 0.25) {
+    return scrollTopFromTimelineUnit(FINALE_START_UNIT);
+  }
   if (unit > OPENING_STOP_UNIT + 0.08) return null;
   return current > window.innerHeight * 0.35 ? 0 : scrollTopFromTimelineUnit(OPENING_STOP_UNIT);
 }
 
 function durationForTarget(target: number) {
-  const openingTarget = Math.max(1, scrollTopFromTimelineUnit(OPENING_STOP_UNIT));
+  const unit = timelineUnitFromScroll();
+  const isFinale = unit >= FINALE_START_UNIT - 0.25;
+  const runStart = scrollTopFromTimelineUnit(isFinale ? FINALE_START_UNIT : 0);
+  const runEnd = scrollTopFromTimelineUnit(isFinale ? FINALE_STOP_UNIT : OPENING_STOP_UNIT);
+  const runDistance = Math.max(1, Math.abs(runEnd - runStart));
   const distance = Math.abs(target - window.scrollY);
-  const progress = clamp(distance / openingTarget, 0, 1);
-  return clamp(OPENING_RUN_DURATION * progress, MIN_DURATION, OPENING_RUN_DURATION);
+  const progress = clamp(distance / runDistance, 0, 1);
+  const fullDuration = isFinale ? FINALE_RUN_DURATION : OPENING_RUN_DURATION;
+  return clamp(fullDuration * progress, MIN_DURATION, fullDuration);
 }
 
 export function useSectionAutoAdvance() {

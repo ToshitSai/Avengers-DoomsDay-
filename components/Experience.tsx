@@ -121,20 +121,64 @@ export default function Experience() {
           const marvel = getVideoEl("marvel");
           const hero = getVideoEl("hero");
           const finale = getVideoEl("finale");
+          const autopilot = (window as Window & { __cinematicAutopilot?: boolean }).__cinematicAutopilot === true;
+          const driveVideo = (el: HTMLVideoElement | null, opacity: number, time: number, visible?: boolean) => {
+            if (!el) return;
+            el.style.opacity = opacity.toFixed(3);
+            if (visible != null) el.style.visibility = visible ? "visible" : "hidden";
+
+            if (opacity <= 0.002) {
+              el.playbackRate = 1;
+              if (autopilot && time > (el.duration || 1) * 0.8) {
+                try {
+                  el.currentTime = Math.max(0, (el.duration || 1) - 0.03);
+                } catch {
+                  /* ignore hidden-frame alignment failures */
+                }
+              }
+              if (!el.paused) el.pause();
+              return;
+            }
+
+            if (autopilot) {
+              const lag = time - el.currentTime;
+              el.playbackRate = Math.max(0.85, Math.min(1.8, 1 + lag * 0.28));
+              if (lag > 2.4) {
+                try {
+                  el.currentTime = Math.max(0, Math.min((el.duration || 1) - 0.03, time - 0.35));
+                } catch {
+                  /* avoid interrupting playback if the browser rejects a correction */
+                }
+              }
+              if (el.paused) {
+                const delta = Math.abs(el.currentTime - time);
+                if (delta > 0.65) {
+                  try {
+                    el.currentTime = Math.max(0, Math.min((el.duration || 1) - 0.03, time));
+                  } catch {
+                    /* keep playback smooth even if the browser rejects a seek */
+                  }
+                }
+                el.play().catch(() => {});
+              }
+              return;
+            }
+
+            el.playbackRate = 1;
+            if (!el.paused) el.pause();
+            scrubEl(el, time);
+          };
+
           if (marvel) {
-            marvel.style.opacity = signals.marvelOp.toFixed(3);
-            if (signals.marvelOp > 0.002) scrubEl(marvel, signals.marvelT);
+            driveVideo(marvel, signals.marvelOp, signals.marvelT);
           }
           if (hero) {
-            hero.style.opacity = signals.heroOp.toFixed(3);
-            if (signals.heroOp > 0.002) scrubEl(hero, signals.heroT);
+            driveVideo(hero, signals.heroOp, signals.heroT);
           }
           // Section 5 — the ending video is scroll-scrubbed exactly like the Hero:
           // opacity + frame-accurate currentTime driven on the scroll event.
           if (finale) {
-            finale.style.opacity = signals.finale.toFixed(3);
-            finale.style.visibility = signals.finale > 0.002 ? "visible" : "hidden";
-            if (signals.finale > 0.002) scrubEl(finale, signals.finaleT);
+            driveVideo(finale, signals.finale, signals.finaleT, signals.finale > 0.002);
           }
           const next = self.progress >= heroThreshold ? "hero" : "intro";
           if (useExperience.getState().phase !== next) useExperience.getState().setPhase(next);
