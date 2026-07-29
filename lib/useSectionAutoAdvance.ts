@@ -24,8 +24,11 @@ type WindowWithLenis = Window & {
 const MIN_GESTURE_DELTA = 8;
 const TOUCH_GESTURE_DELTA = 34;
 const MIN_DURATION = 5;
+const HERO_VIDEO_START_UNIT = 7.8;
+const FIRST_VIDEO_HANDOFF_DURATION = 9.5;
+const HERO_VIDEO_RUN_DURATION = 32;
 const OPENING_STOP_UNIT = 11.58;
-const OPENING_RUN_DURATION = 56;
+const OPENING_RUN_DURATION = 42;
 const FINALE_START_UNIT = 31.55;
 const FINALE_STOP_UNIT = 38.52;
 const FINALE_RUN_DURATION = 27;
@@ -127,9 +130,26 @@ export function useSectionAutoAdvance() {
     const startRun = (direction: 1 | -1) => {
       if (runningRef.current) return true;
 
+      const unit = timelineUnitFromScroll();
       const target = targetForDirection(direction);
       if (target == null) return false;
       if (Math.abs(target - window.scrollY) < 12) return false;
+
+      const openingStopTop = scrollTopFromTimelineUnit(OPENING_STOP_UNIT);
+      const shouldChainOpening =
+        direction > 0 && unit < HERO_VIDEO_START_UNIT - 0.2 && Math.abs(target - openingStopTop) < 2;
+
+      if (shouldChainOpening) {
+        runningRef.current = true;
+        w.__cinematicAutopilot = true;
+        if (timerRef.current != null) window.clearTimeout(timerRef.current);
+        scrollToPosition(scrollTopFromTimelineUnit(HERO_VIDEO_START_UNIT), FIRST_VIDEO_HANDOFF_DURATION);
+        timerRef.current = window.setTimeout(() => {
+          scrollToPosition(openingStopTop, HERO_VIDEO_RUN_DURATION);
+          timerRef.current = window.setTimeout(clearRun, HERO_VIDEO_RUN_DURATION * 1000 + 500);
+        }, FIRST_VIDEO_HANDOFF_DURATION * 1000 + 100);
+        return true;
+      }
 
       const duration = durationForTarget(target);
       runningRef.current = true;

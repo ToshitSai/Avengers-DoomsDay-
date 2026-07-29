@@ -13,6 +13,10 @@ export function useLenis() {
   const ref = useRef<Lenis | null>(null);
 
   useEffect(() => {
+    const previousScrollRestoration = history.scrollRestoration;
+    history.scrollRestoration = "manual";
+    window.scrollTo(0, 0);
+
     const lenis = new Lenis({
       duration: 0.95,
       easing: (t) => 1 - Math.pow(1 - t, 3),
@@ -22,6 +26,7 @@ export function useLenis() {
       lerp: 0.13,
     });
     ref.current = lenis;
+    lenis.scrollTo(0, { immediate: true, force: true });
     (window as unknown as Record<string, unknown>).__lenis = lenis;
     if (process.env.NODE_ENV !== "production") {
       (window as unknown as Record<string, unknown>).__lenis = lenis;
@@ -36,6 +41,7 @@ export function useLenis() {
     return () => {
       gsap.ticker.remove(raf);
       lenis.destroy();
+      history.scrollRestoration = previousScrollRestoration;
       delete (window as unknown as Record<string, unknown>).__lenis;
       ref.current = null;
     };
